@@ -2074,16 +2074,20 @@ wheels = [
 [[package]]
 name = "salesforce-airflow"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "apache-airflow" },
     { name = "apache-airflow-providers-cncf-kubernetes" },
+    { name = "httpx" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "apache-airflow", specifier = ">=3.0.6" },
     { name = "apache-airflow-providers-cncf-kubernetes", specifier = ">=10.8.0" },
+    { name = "httpx", specifier = ">=0.24.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
 ]
 
 [[package]]

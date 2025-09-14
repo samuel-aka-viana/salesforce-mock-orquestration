@@ -5,8 +5,11 @@ description = "Airflow DAGs for Salesforce data orchestration"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "apache-airflow>=2.8.4,<3.0.0",  # Versão mais estável
-    "apache-airflow-providers-cncf-kubernetes>=7.4.0",
+    "apache-airflow>=3.0.6",
+    "apache-airflow-providers-cncf-kubernetes>=10.8.0",
+    # Dependências adicionais para v3.0
+    "pydantic>=2.0.0",
+    "httpx>=0.24.0",
 ]
 
 [build-system]
