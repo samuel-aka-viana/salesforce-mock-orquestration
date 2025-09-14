@@ -5,20 +5,29 @@ from airflow.models.dag import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 
+# Configurações de ambiente que serão injetadas no pod
+task_env_vars = {
+    "AIRFLOW__CORE__EXECUTION_API_SERVER_URL": "http://airflow-api-server.airflow.svc.cluster.local:8080/execution/",
+    "AIRFLOW__KUBERNETES__NAMESPACE": "airflow",
+    "AIRFLOW__KUBERNETES__IN_CLUSTER": "True",
+    "AIRFLOW__EXECUTION__TASK_EXECUTION_ENABLED": "True",
+    "AIRFLOW__API__AUTH_BACKENDS": "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+}
+
 with DAG(
-        dag_id="hello_kubernetes_world_working",
-        start_date=pendulum.datetime(2025, 9, 14, tz="UTC"),
-        catchup=False,
-        schedule=None,
-        tags=["kubernetes", "working"],
-        description="Versão funcional do Hello World Kubernetes",
-        max_active_runs=1,
+    dag_id="hello_kubernetes_world_working",
+    start_date=pendulum.datetime(2025, 9, 14, tz="UTC"),
+    catchup=False,
+    schedule=None,
+    tags=["kubernetes", "working"],
+    description="Versão funcional do Hello World Kubernetes",
+    max_active_runs=1,
 ) as dag:
     start = EmptyOperator(task_id="start")
 
     hello_kubernetes_task = KubernetesPodOperator(
         task_id="hello_kubernetes_pod_task",
-        name="hello-world-{{ ds }}-{{ ts_nodash }}",  # Nome único para evitar conflitos
+        name="hello-world-{{ ds }}-{{ ts_nodash }}",
         namespace="airflow",
         image="bash:5.2",
         cmds=["bash"],
@@ -42,19 +51,19 @@ with DAG(
             echo 'RESULTADO: ✅ SUCESSO TOTAL!'
             """
         ],
-        # Configurações para funcionar corretamente
+        # FORÇAR variáveis de ambiente diretamente no pod
+        env_vars=task_env_vars,
         do_xcom_push=False,
         get_logs=True,
         is_delete_operator_pod=True,
         in_cluster=True,
-        startup_timeout_seconds=120,
-        # Recursos adequados
-        container_resources={
-            "requests": {"cpu": "100m", "memory": "128Mi"},
-            "limits": {"cpu": "300m", "memory": "256Mi"}
+        # Configuração adicional de recursos
+        resources={
+            "request_cpu": "100m",
+            "request_memory": "128Mi",
+            "limit_cpu": "500m",
+            "limit_memory": "512Mi"
         },
-        # Labels para identificação
-        labels={"app": "airflow-test", "version": "working"},
     )
 
     end = EmptyOperator(task_id="end")
