@@ -12,15 +12,14 @@ with DAG(
     schedule=None,
     tags=["kubernetes", "working"],
     description="Versão funcional do Hello World Kubernetes",
-    max_active_runs=1,  # remova se sua versão reclamar
+    max_active_runs=1,
 ) as dag:
     start = EmptyOperator(task_id="start")
 
     hello_kubernetes_task = KubernetesPodOperator(
         task_id="hello_kubernetes_pod_task",
-        # Evite Jinja e caracteres inválidos no nome
         name="hello-world",
-        random_name_suffix=True,  # garante unicidade e comprimento válido
+        random_name_suffix=True,
         namespace="airflow",
         image="bash:5.2",
         cmds=["bash"],
@@ -41,26 +40,31 @@ with DAG(
             echo 'RESULTADO: SUCESSO TOTAL'
             """
         ],
-        # Removido AIRFLOW__* desnecessário. Se quiser manter, saiba que não afetam o bash.
         env_vars={
-            # exemplo útil: rastreio básico
+            "AIRFLOW__CORE__EXECUTION_API_SERVER_URL": "http://airflow-api-server.airflow.svc.cluster.local:8080/execution/",
+            "AIRFLOW__KUBERNETES__NAMESPACE": "airflow",
+            "AIRFLOW__KUBERNETES__IN_CLUSTER": "True",
+            "AIRFLOW__EXECUTION__TASK_EXECUTION_ENABLED": "True",
             "JOB_LABEL": "hello-world",
         },
         get_logs=True,
         do_xcom_push=False,
         is_delete_operator_pod=True,
-        in_cluster=True,  # mantenha apenas este
-        resources={
-            "request_cpu": "100m",
-            "request_memory": "128Mi",
-            "limit_cpu": "500m",
-            "limit_memory": "512Mi",
+        in_cluster=True,
+        container_resources={
+            "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+            },
+            "limits": {
+                "cpu": "500m",
+                "memory": "512Mi"
+            }
         },
         labels={
             "airflow_task": "hello_kubernetes_pod_task",
             "airflow_dag": "hello_kubernetes_world_working",
         },
-        # restart_policy é "Never" por padrão; ajuste se precisar
     )
 
     end = EmptyOperator(task_id="end")
