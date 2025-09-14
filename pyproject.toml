@@ -1,10 +1,14 @@
 [project]
 name = "salesforce-airflow"
 version = "0.1.0"
-description = "Add your description here"
+description = "Airflow DAGs for Salesforce data orchestration"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "apache-airflow>=3.0.6",
-    "apache-airflow-providers-cncf-kubernetes>=10.8.0",
+    "apache-airflow>=2.8.4,<3.0.0",  # Versão mais estável
+    "apache-airflow-providers-cncf-kubernetes>=7.4.0",
 ]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
