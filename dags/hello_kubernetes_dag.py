@@ -1,32 +1,55 @@
-from __future__ import annotations
-import pendulum
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from airflow.providers.standard.operators.python import PythonOperator
+from kubernetes.client import models as k8s
 
-with DAG(
-        dag_id="kpo_minimo",
-        start_date=pendulum.datetime(2025, 9, 14, tz="UTC"),
-        schedule=None,
-        catchup=False,
-        tags=["kubernetes", "test"],
-        max_active_runs=1,
-) as dag:
-    echo_task = KubernetesPodOperator(
-        task_id="echo_kpo",
-        namespace="airflow",
-        service_account_name="airflow",
-        image="bash:5.2",
-        cmds=["/bin/bash", "-c"],
-        arguments=["echo 'Hello Kubernetes from KPO!' && sleep 10"],
-        get_logs=True,
-        is_delete_operator_pod=True,
-        in_cluster=True,
-        startup_timeout_seconds=600,
-        name="airflow-kpo-test",
-        resources={
-            "requests": {"memory": "64Mi", "cpu": "250m"},
-            "limits": {"memory": "128Mi", "cpu": "500m"}
-        },
-        do_xcom_push=False,
-        retry_delay=pendulum.duration(minutes=5),
-    )
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'test_kubernetes_executor',
+    default_args=default_args,
+    description='Teste do KubernetesExecutor e KubernetesPodOperator',
+    schedule_interval=None,
+    catchup=False,
+    tags=['test', 'kubernetes'],
+)
+
+def print_hello():
+    print("Hello from KubernetesExecutor!")
+    return "success"
+
+python_task = PythonOperator(
+    task_id='python_task',
+    python_callable=print_hello,
+    dag=dag,
+)
+
+resources = k8s.V1ResourceRequirements(
+    requests={"cpu": "100m", "memory": "128Mi"},
+    limits={"cpu": "200m", "memory": "256Mi"}
+)
+
+k8s_task = KubernetesPodOperator(
+    task_id='kubernetes_pod_task',
+    name='test-pod',
+    namespace='airflow',
+    image='python:3.9-slim',
+    cmds=['python', '-c'],
+    arguments=['print("Hello from KubernetesPodOperator!"); import time; time.sleep(10)'],
+    resources=resources,
+    is_delete_operator_pod=True,
+    get_logs=True,
+    service_account_name='airflow',
+    dag=dag,
+)
+
+python_task >> k8s_task
