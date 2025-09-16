@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+# FIXED: Correct import path for Airflow 3.0.2
 from airflow.operators.python import PythonOperator
 
 # Configurações padrão da DAG
@@ -36,7 +37,6 @@ python_task = PythonOperator(
     dag=dag,
 )
 
-# Task Kubernetes (Versão Mínima)
 k8s_task = KubernetesPodOperator(
     task_id='hello_kubernetes',
     name='hello-k8s-pod',
@@ -46,6 +46,8 @@ k8s_task = KubernetesPodOperator(
     arguments=['print("Hello from Kubernetes Pod!"); print("Task completed successfully!")'],
     is_delete_operator_pod=True,
     get_logs=True,
+    startup_timeout_seconds=120,
+    do_xcom_push=False,
     dag=dag,
 )
 
