@@ -1,16 +1,25 @@
 [project]
 name = "salesforce-airflow"
 version = "0.1.0"
-description = "Airflow DAGs for Salesforce data orchestration"
+description = "Airflow DAGs for Salesforce data orchestration - Compatible with Airflow 3.0.2"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
-    "apache-airflow>=3.0.6",
-    "apache-airflow-providers-cncf-kubernetes>=10.8.0",
-    # Dependências adicionais para v3.0
-    "pydantic>=2.0.0",
-    "httpx>=0.24.0",
+  "apache-airflow==3.0.2",
+  "apache-airflow-providers-cncf-kubernetes>=10.6.0,<11.0.0",
+  "apache-airflow-providers-http>=4.0.0",
+  "pydantic>=2.0.0,<3.0.0",
+  "httpx>=0.24.0,<1.0.0",
+  "pendulum>=3.0.0,<4.0.0",
+  "psycopg2-binary>=2.9.0",
+  "redis>=4.0.0",
+  # opcional: alinhar explicitamente com os constraints do 3.0.x
+  "sqlalchemy==1.4.54",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.21", "black>=23", "isort>=5.12", "flake8>=6", "mypy>=1"]
+testing = ["testcontainers>=3.7.0"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
