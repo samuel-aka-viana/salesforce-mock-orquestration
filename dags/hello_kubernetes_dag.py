@@ -53,18 +53,14 @@ pod_resources = k8s.V1ResourceRequirements(
     }
 )
 
-# Configurações de segurança para o pod
-security_context = k8s.V1SecurityContext(
+# Configuração de security context para o container
+container_security_context = k8s.V1SecurityContext(
     run_as_non_root=True,
     run_as_user=1000,
     run_as_group=1000,
-)
-
-pod_security_context = k8s.V1PodSecurityContext(
-    run_as_non_root=True,
-    run_as_user=1000,
-    run_as_group=1000,
-    fs_group=1000,
+    allow_privilege_escalation=False,
+    read_only_root_filesystem=False,
+    capabilities=k8s.V1Capabilities(drop=["ALL"]),
 )
 
 # Task Kubernetes usando KubernetesPodOperator
@@ -85,12 +81,10 @@ time.sleep(10)
 print("Processing completed successfully!")
         '''
     ],
-    container_resources=pod_resources,  # Mudança: container_resources em vez de resources
-    security_context=security_context,
-    pod_security_context=pod_security_context,
+    container_resources=pod_resources,  # Correto para v3.0.2
+    container_security_context=container_security_context,  # Correto para v3.0.2
     is_delete_operator_pod=True,
     get_logs=True,
-    log_events_on_failure=True,
     service_account_name='airflow',
     dag=dag,
     # Configurações adicionais para v3.0
